@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "github.api.accessToken",
+      "type": "java.lang.String",
+      "description": "Access token to access Github."
+    },
+    {
+      "name": "github.api.baseUrl",
+      "type": "java.lang.String",
+      "description": "Base Url used to access Github REST API."
+    },
+    {
+      "name": "github.api.mediaType",
+      "type": "java.lang.String",
+      "description": "Media type for Github access. Depends on the baseUrl."
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+openapi: 3.0.3
+info:
+ title: Github Lister
+ description: Lists github projects which are not forks by username
+ version: 1.0.0
+servers:
+ - url: 'http://localhost:8080/github-lister/v1/'
+paths:
+ /repositories/{username}:
+  get:
+   summary: Returns a list of repositories for a given username
+   description: Only returns a list of repositories that are not forks
+   parameters:
+    - name: username
+      in: path
+      description: Github username
+      required: true
+      schema:
+       type: string
+   responses:
+    200:
+     description: OK
+     content:
+      application/json:
+       schema:
+        type: array
+        items:
+         $ref: "#/components/schemas/repository"
+    404:
+     description: Requested username was not found
+     content:
+      application/json:
+       schema:
+        $ref: "#/components/schemas/error"
+       example: { status: 404, message: "User mfattah not found" }
+    406:
+     description: Not possible to produce accepted value in request header
+     content:
+      application/json:
+       schema:
+        $ref: "#/components/schemas/error"
+       example: { status: 406, message: "Response type not supported" }
+
+components:
+ schemas:
+  branch:
+   type: object
+   required:
+    - name
+    - lastCommitSHA
+   properties:
+    name:
+     type: string
+    lastCommitSHA:
+     type: string
+  repository:
+   type: object
+   required:
+    - name
+    - owner
+    - branches
+   properties:
+    name:
+     type: string
+    owner:
+     type: string
+    branches:
+     type: array
+     items:
+      $ref: "#/components/schemas/branch"
+  error:
+   type: object
+   required:
+    - status
+    - message
+   properties:
+    status:
+     type: integer
+    message:
+     type: string

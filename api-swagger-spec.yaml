@@ -1,0 +1,76 @@
+swagger: "2.0"
+info:
+ title: Github Lister
+ description: Lists github projects which are not forks by username
+ version: 1.0.0
+host: localhost:8080
+basePath: /github-lister/v1
+schemes:
+ - http
+paths:
+ /repositories/{username}:
+  get:
+   summary: Returns a list of repositories for a given username
+   description: Only returns a list of repositories that are not forks
+   parameters:
+    - name: username
+      description: Github username
+      type: string
+      in: path
+      required: true
+   produces:
+    - application/json
+   responses:
+    200:
+     description: OK
+     schema:
+      type: array
+      items:
+       $ref: "#/definitions/repository"
+    404:
+     description: Requested username was not found
+     examples: { status: 404, message: "User not found" }
+     schema:
+      $ref: "#/definitions/error"
+    406:
+     description: Not possible to produce accepted value in request header
+     examples: { status: 406, message: "Response type not supported" }
+     schema:
+      $ref: "#/definitions/error"
+
+definitions:
+ branch:
+  type: object
+  required:
+   - name
+   - lastCommitSHA
+  properties:
+   name:
+    type: string
+   lastCommitSHA:
+    type: string
+ repository:
+  type: object
+  required:
+   - name
+   - owner
+   - branches
+  properties:
+   name:
+    type: string
+   owner:
+    type: string
+   branches:
+    type: array
+    items:
+     $ref: "#/definitions/branch"
+ error:
+  type: object
+  required:
+   - status
+   - message
+  properties:
+   status:
+    type: integer
+   message:
+    type: string
