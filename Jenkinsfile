@@ -48,8 +48,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([aws(credentialsId: 'jenkins-user')]) {
-                        docker.image("xueshanf/awscli:latest").inside("--entrypoint \"\" -v \"${paramsFile}:/params.json\" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION") {
+                        docker.image("amazon/aws-cli:latest").inside("--entrypoint \"\" -v \"${paramsFile}:/params.json\" -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION") {
                             sh "aws cloudformation deploy --region=${region} --template-file cf-stack.yaml --stack-name github-lister-stack --parameter-overrides file:///params.json"
+                            sh "aws cloudformation list-exports --region=${region} --query \"Exports[?Name==\\`GithubListerStackApiGatewayUrl\\`].Value\" --output text --no-cli-pager"
                         }
                     }
                 }

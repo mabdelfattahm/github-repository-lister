@@ -167,7 +167,7 @@ Resources:
      integration.request.path.proxy: 'method.request.path.proxy'
     IntegrationHttpMethod: ANY
     Type: HTTP_PROXY
-    Uri: !Join [ '', ["http://", !GetAtt FargateAlb.DNSName, "/{proxy}"] ]
+    Uri: !Sub "http://${FargateAlb.DNSName}/{proxy}"
     PassthroughBehavior: WHEN_NO_MATCH
  ApiDeployment:
   DependsOn:
@@ -176,3 +176,9 @@ Resources:
   Properties:
    RestApiId: !Ref Api
    StageName: dev
+Outputs:
+ GithubListerStackApiGatewayUrl:
+  Description: The URL of the API gateway
+  Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+  Export:
+    Name: GithubListerStackApiGatewayUrl
