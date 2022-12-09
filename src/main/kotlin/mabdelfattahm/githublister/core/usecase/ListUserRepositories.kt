@@ -1,8 +1,9 @@
 package mabdelfattahm.githublister.core.usecase
 
-import mabdelfattahm.githublister.core.entity.Branch
 import mabdelfattahm.githublister.core.entity.RepositoryBranches
-import mabdelfattahm.githublister.core.error.GenericDomainError
+import mabdelfattahm.githublister.core.error.BranchRetrievalError
+import mabdelfattahm.githublister.core.error.RepositoryRetrievalError
+import mabdelfattahm.githublister.core.error.UserNotFoundError
 import mabdelfattahm.githublister.core.interactor.Branches
 import mabdelfattahm.githublister.core.interactor.Repositories
 import reactor.core.publisher.Flux
@@ -16,11 +17,6 @@ import reactor.core.publisher.Flux
 class ListUserRepositories(private val repositories: Repositories, private val branches: Branches) {
 
     /**
-     * Empty branch instance to preserve repositories with no branches
-     */
-    private val emptyBranch = Branch("empty", "empty")
-
-    /**
      * Run the use case
      * @param username Git username.
      * @return RepositoryWithBranches reactive stream.
@@ -28,27 +24,11 @@ class ListUserRepositories(private val repositories: Repositories, private val b
     fun execute(username: String): Flux<RepositoryBranches> =
         repositories.byUsername(username)
             .filter { !it.isFork }
-            .onErrorMap (
-                { it !is GenericDomainError },
-                { GenericDomainError("Retrieving repositories for user $username failed. Cause: ${it.message}", it) }
-            )
-            .concatMap { repo ->
+            .onErrorMap({ it !is UserNotFoundError }, { RepositoryRetrievalError(username, it.message, it) })
+            .flatMap { repo ->
                 branches.byRepository(repo.owner, repo.name)
-                    .startWith(emptyBranch)
-                    .map { branch -> Pair(repo, branch) }
-                    .onErrorMap (
-                        { it !is GenericDomainError },
-                        { GenericDomainError("Retrieving branches for repository ${repo.name} failed. Cause: ${it.message}", it) }
-                    )
+                    .collectList()
+                    .onErrorMap { BranchRetrievalError(repo.name, it.message, it) }
+                    .map { branches -> RepositoryBranches(repo.name, repo.owner, branches) }
             }
-            .bufferUntilChanged { (repo, _) -> repo.name }
-            .map { list ->
-                val (repo, _) = list.first()
-                RepositoryBranches(
-                    repo.name,
-                    repo.owner,
-                    list.filterNot { (_, branch) -> branch == emptyBranch }.map { (_, branch) -> branch }
-                )
-            }
-
 }

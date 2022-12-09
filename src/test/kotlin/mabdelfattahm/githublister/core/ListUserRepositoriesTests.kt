@@ -1,14 +1,15 @@
 package mabdelfattahm.githublister.core
 
+import io.mockk.every
+import io.mockk.mockk
 import mabdelfattahm.githublister.core.entity.Branch
 import mabdelfattahm.githublister.core.entity.Repository
-import mabdelfattahm.githublister.core.error.GenericDomainError
+import mabdelfattahm.githublister.core.error.BranchRetrievalError
+import mabdelfattahm.githublister.core.error.RepositoryRetrievalError
 import mabdelfattahm.githublister.core.error.UserNotFoundError
 import mabdelfattahm.githublister.core.interactor.Branches
 import mabdelfattahm.githublister.core.interactor.Repositories
 import mabdelfattahm.githublister.core.usecase.ListUserRepositories
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
@@ -64,7 +65,7 @@ class ListUserRepositoriesTests {
         every { branches.byRepository(any(), any()) } returns Flux.just(branch).startWith(Flux.error(Exception("error")))
         StepVerifier
             .create(usecase.execute(username).log())
-            .expectErrorMatches { it is GenericDomainError && it.message?.contains("branches") ?:false }
+            .expectErrorMatches { it is BranchRetrievalError }
             .verify()
     }
 
@@ -77,7 +78,7 @@ class ListUserRepositoriesTests {
         every { branches.byRepository(any(), any()) } returns Flux.just(branch)
         StepVerifier
             .create(usecase.execute(username).log())
-            .expectErrorMatches { it is GenericDomainError && it.message?.contains("user") ?:false }
+            .expectErrorMatches { it is RepositoryRetrievalError }
             .verify()
     }
 }
